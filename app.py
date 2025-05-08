@@ -33,13 +33,16 @@ def select_sheet():
     session['sheet'] = sheet
     file_path = session['file_path']
     df = pd.read_excel(file_path, sheet_name=sheet)
+    
+    # Lọc những dòng có Enable = 1
     df = df[df['Enable'] == 1].reset_index(drop=True)
+    
     session['data'] = df.to_dict(orient='records')
     session['index'] = 0
-    session['direction'] = 'Nghia'  # hoặc 'Tu'
+    session['direction'] = 'Nghia'  # Mặc định bắt đầu với "Nghĩa"
     return redirect(url_for('study'))
 
-@app.route('/set-direction/<direction>') 
+@app.route('/set-direction/<direction>')
 def set_direction(direction):
     session['direction'] = direction
     session['index'] = 0
@@ -55,17 +58,20 @@ def study():
         return render_template('complete.html')
 
     row = data[index]
-    show = row[direction]
+    show = row[direction]  # Hiển thị "Nghĩa" hoặc "Từ"
     correct = row['Tu']
     nghia = row['Nghia']
     pinyin = row['Pinyin']
 
     if request.method == 'POST':
         answer = request.form['answer'].strip()
+        
+        # Kiểm tra đáp án
         if (direction == 'Nghia' and answer == row['Tu']) or (direction == 'Tu' and answer == row['Nghia']):
             session['index'] = index + 1
             return redirect(url_for('study'))
         else:
+            # Nếu sai, hiển thị đầy đủ 3 cột: Từ, Pinyin, Nghĩa
             return render_template('study.html', show=show, correct=correct, nghia=nghia,
                                    pinyin=pinyin, incorrect=True, direction=direction)
 
